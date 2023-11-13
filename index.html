@@ -1,162 +1,119 @@
 <!DOCTYPE html>
 <html lang="en-us">
   <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Community</title>
-    <link rel="stylesheet" href="External/style.css" />
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity WebGL Player | Community</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
   </head>
   <body>
     <div id="unity-container" class="unity-desktop">
-      <canvas
-        id="unity-canvas"
-        width="2048"
-        height="1152"
-      ></canvas>
-
-      <footer>
-        <div class="footer">
-          <a
-            href="https://jrpg.com/"
-            onclick="window.parent.location.href='https://jrpg.com/'"
-            >WebGL Tools for Unity</a
-          >
+      <canvas id="unity-canvas" width=1920 height=1080></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
         </div>
-      </footer>
+      </div>
+      <div id="unity-warning"> </div>
+      <div id="unity-footer">
+        <div id="unity-webgl-logo"></div>
+        <div id="unity-fullscreen-button"></div>
+        <div id="unity-build-title">Community</div>
+      </div>
     </div>
     <script>
-        let portraitMode;
-        try {
-          portraitMode = !!JSON.parse();
-        } catch (e) {
-          portraitMode = false;
-        }
+      var container = document.querySelector("#unity-container");
+      var canvas = document.querySelector("#unity-canvas");
+      var loadingBar = document.querySelector("#unity-loading-bar");
+      var progressBarFull = document.querySelector("#unity-progress-bar-full");
+      var fullscreenButton = document.querySelector("#unity-fullscreen-button");
+      var warningBanner = document.querySelector("#unity-warning");
 
-        var buildUrl = "Build";
-      var loaderUrl = buildUrl +  "/ch13repson3.loader.js";
+      // Shows a temporary message banner/ribbon for a few seconds, or
+      // a permanent error message on top of the canvas if type=='error'.
+      // If type=='warning', a yellow highlight color is used.
+      // Modify or remove this function to customize the visually presented
+      // way that non-critical warnings and error messages are presented to the
+      // user.
+      function unityShowBanner(msg, type) {
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        else {
+          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/ch13repson4.loader.js";
       var config = {
-          dataUrl: buildUrl + "/458422db7f3e165b49797d9afde930c4.data.br",
-          frameworkUrl: buildUrl + "/a676678158a590f07265f42cfdd6b484.js.br",
-          codeUrl: buildUrl + "/f70027c2093d5b5cf6fc6406e6765323.wasm.br",
-          streamingAssetsUrl: "StreamingAssets",
-          companyName: "CHthirteen",
-          productName: "Community",
-          productVersion: "0.1",
+        dataUrl: buildUrl + "/07d9044d0429739a6cf6a8810927632b.data.br",
+        frameworkUrl: buildUrl + "/a676678158a590f07265f42cfdd6b484.js.br",
+        codeUrl: buildUrl + "/f70027c2093d5b5cf6fc6406e6765323.wasm.br",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "CHthirteen",
+        productName: "Community",
+        productVersion: "0.1",
+        showBanner: unityShowBanner,
       };
 
-        var container = document.querySelector("#unity-container");
-        var canvas = document.querySelector("#unity-canvas");
+      // By default Unity keeps WebGL canvas render target size matched with
+      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
+      // Set this to false if you want to decouple this synchronization from
+      // happening inside the engine, and you would instead like to size up
+      // the canvas DOM size and WebGL render target sizes yourself.
+      // config.matchWebGLToCanvasSize = false;
 
-        // By default Unity keeps WebGL canvas render target size matched with
-        // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-        // Set this to false if you want to decouple this synchronization from
-        // happening inside the engine, and you would instead like to size up
-        // the canvas DOM size and WebGL render target sizes yourself.
-        // config.matchWebGLToCanvasSize = false;
-        canvas.style.width = "2048" + "px";
-        canvas.style.height = "1152" + "px";
-        var unityInstance = null;
-        var script = document.createElement("script");
-        script.src = loaderUrl;
-        script.onload = () => {
-          createUnityInstance(canvas, config, UnityLoadProgress)
-            .then((uI) => {
-              unityInstance = uI;
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Mobile device style: fill the whole browser client area with the game canvas:
 
-            })
-            .catch((message) => {
-              alert(message);
-            });
-        };
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+        container.className = "unity-mobile";
+        canvas.className = "unity-mobile";
 
-        document.body.appendChild(script);
+        // To lower canvas resolution on mobile devices to gain some
+        // performance, uncomment the following line:
+        // config.devicePixelRatio = 1;
 
-        function OnUnload() {
-          unityInstance.SendMessage("_BrowserControls", "BrowserUnloaded");
-        }
+        unityShowBanner('WebGL builds are not supported on mobile devices.');
+      } else {
+        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
 
-        function OnAppLoaded() {
-          document
-            .getElementById("unity-container")
-            .addEventListener("mouseenter", () => {
-              unityInstance.SendMessage("_BrowserControls", "MouseEntered");
-            });
+        canvas.style.width = "1920px";
+        canvas.style.height = "1080px";
+      }
 
-          document
-            .getElementById("unity-container")
-            .addEventListener("mouseleave", () => {
-              unityInstance.SendMessage("_BrowserControls", "MouseLeft");
-            });
-        }
+      loadingBar.style.display = "block";
 
-        function UnityLoadProgress(progress) {
-          if (progress == 1) {
-            //gameInstance.logo.style.display = gameInstance.progress.style.display = "none";
-            console.log("WEBGL LOADED SUCCESSFULLY..");
-
-            setTimeout(() => {
-              unityInstance.SendMessage("_BrowserControls", "BrowserLoaded");
-              Resize();
-              OnAppLoaded();
-            }, 2500);
-          }
-        }
-
-        function Resize() {
-          //Resizer functionality
-          //Itch IO Logic - not to be mistaken by main site logic
-          let container = unityInstance.Module.canvas;
-          let width = window.innerWidth;
-          let height = window.innerHeight;
-
-          let aspectRatio;
-
-          if (portraitMode) {
-            if (1152 > 2048) {
-              aspectRatio = 1152 / 2048;
-            } else {
-              aspectRatio = 2048 / 1152;
-            }
-          } else {
-            if (2048 < 1152) {
-              aspectRatio = 2048 / 1152;
-            } else {
-              aspectRatio = 1152 / 2048;
-            }
-          }
-
-          if (width * aspectRatio > window.innerHeight) {
-            width = Math.min(width, Math.ceil(height / aspectRatio));
-          }
-          height = Math.floor(width * aspectRatio);
-
-          container.style.width = width + "px";
-          container.style.height = height + "px";
-          container.style.top = (window.innerHeight - height) / 2 + "px";
-          container.style.left = (window.innerWidth - width) / 2 + "px";
-          container.style.height = height - 12 + "px";
-
-          let sizeObj = { height: height, width: width };
-
-          try {
-            unityInstance.SendMessage(
-              "Main Camera",
-              "LoadBrowserVariables",
-              JSON.stringify(sizeObj)
-            );
-          } catch {
-            console.log(
-              "Main camera not found!Maybe this isn't the tool showcase build"
-            );
-          }
-        }
-        //The event for when page refreshes or closes
-        window.addEventListener("beforeunload", function (e) {
-          OnUnload();
-          console.log("Page unloaded");
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          progressBarFull.style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+          loadingBar.style.display = "none";
+          fullscreenButton.onclick = () => {
+            unityInstance.SetFullscreen(1);
+          };
+        }).catch((message) => {
+          alert(message);
         });
-
-        window.addEventListener("resize", Resize);
+      };
+      document.body.appendChild(script);
     </script>
   </body>
 </html>
